@@ -130,7 +130,7 @@ def generate_pixel_art(
                 "height": size,
                 "palette": [{"r": c[0], "g": c[1], "b": c[2]} for c in palette],
                 "pixels": [{"x": i % size, "y": i // size, "color_index": palette.index((p[0], p[1], p[2])) if p[3] > 128 else -1} 
-                          for i, p in enumerate(pixel_data)]
+                    for i, p in enumerate(pixel_data)]
             }
             
             return design_data
