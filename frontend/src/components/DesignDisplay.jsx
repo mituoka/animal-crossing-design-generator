@@ -9,7 +9,7 @@ const DesignDisplay = ({ design, onDownload, onRegenerate }) => {
   const downloadImage = () => {
     // 画像をダウンロードする処理
     const link = document.createElement("a");
-    link.href = design.image;
+    link.href = design.generated_image;
     link.download = `animal-crossing-design-${design.design_id}.png`;
     document.body.appendChild(link);
     link.click();
@@ -113,11 +113,14 @@ const DesignDisplay = ({ design, onDownload, onRegenerate }) => {
               </Typography>
               <Box
                 component="img"
-                src={`data:image/png;base64,${design.original_image}`}
+                src={design.original_image}
                 alt="元の画像"
                 sx={{
                   width: "100%",
                   height: "auto",
+                  maxWidth: "300px",
+                  margin: "0 auto",
+                  display: "block",
                   borderRadius: 1,
                 }}
               />
@@ -132,11 +135,14 @@ const DesignDisplay = ({ design, onDownload, onRegenerate }) => {
               </Typography>
               <Box
                 component="img"
-                src={`data:image/png;base64,${design.generated_image}`}
+                src={design.generated_image}
                 alt="生成された画像"
                 sx={{
                   width: "100%",
                   height: "auto",
+                  maxWidth: "300px",
+                  margin: "0 auto",
+                  display: "block",
                   borderRadius: 1,
                 }}
               />
@@ -164,48 +170,50 @@ const DesignDisplay = ({ design, onDownload, onRegenerate }) => {
         )}
       </Grid>
 
-      <div className="space-y-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            デザイン情報
-          </h3>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">サイズ</dt>
-              <dd className="text-sm text-gray-900">
-                {design.size}x{design.size}px
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">使用色数</dt>
-              <dd className="text-sm text-gray-900">{design.paletteSize}色</dd>
-            </div>
-            {design.prompt && (
-              <div className="sm:col-span-2">
-                <dt className="text-sm font-medium text-gray-500">
-                  プロンプト
-                </dt>
-                <dd className="text-sm text-gray-900">{design.prompt}</dd>
-              </div>
-            )}
-          </dl>
-        </div>
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          デザイン情報
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="textSecondary">
+              サイズ
+            </Typography>
+            <Typography variant="body1">
+              {design.size}x{design.size}px
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="textSecondary">
+              使用色数
+            </Typography>
+            <Typography variant="body1">{design.paletteSize}色</Typography>
+          </Grid>
+          {design.prompt && (
+            <Grid item xs={12}>
+              <Typography variant="body2" color="textSecondary">
+                プロンプト
+              </Typography>
+              <Typography variant="body1">{design.prompt}</Typography>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
 
-        <div className="mt-6 flex flex-wrap gap-4 justify-center">
-          <button
-            onClick={downloadImage}
-            className="bg-ac-blue hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
-          >
-            画像をダウンロード
-          </button>
+      <div className="mt-6 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={downloadImage}
+          className="bg-ac-blue hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
+        >
+          画像をダウンロード
+        </button>
 
-          <button
-            onClick={copyDesignCode}
-            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
-          >
-            デザインコードをコピー
-          </button>
-        </div>
+        <button
+          onClick={copyDesignCode}
+          className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
+        >
+          デザインコードをコピー
+        </button>
       </div>
     </Box>
   );

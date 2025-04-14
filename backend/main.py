@@ -67,26 +67,35 @@ async def generate_from_image(file: UploadFile = File(...)):
         contents = await file.read()
         input_image = Image.open(io.BytesIO(contents))
         
-        # 一時的にファイルに保存
-        temp_path = "temp_input.png"
-        input_image.save(temp_path)
+        # 一時ファイルのパスを設定
+        temp_path = os.path.join(UPLOAD_DIR, f"temp_{uuid.uuid4()}.png")
         
-        # 画像生成
-        logger.info("画像生成を開始")
-        generated_image = generator.generate_from_image(temp_path)
-        logger.info("画像生成が完了")
-        
-        # base64エンコード
-        original_base64 = image_to_base64(input_image)
-        generated_base64 = image_to_base64(generated_image)
-        
-        return {
-            "original_image": original_base64,
-            "generated_image": generated_base64
-        }
+        try:
+            # 一時的にファイルに保存
+            input_image.save(temp_path)
+            
+            # 画像生成
+            logger.info("画像生成を開始")
+            generated_image = generator.generate_from_image(temp_path)
+            logger.info("画像生成が完了")
+            
+            # base64エンコード
+            original_base64 = f"data:image/png;base64,{image_to_base64(input_image)}"
+            generated_base64 = f"data:image/png;base64,{image_to_base64(generated_image)}"
+            
+            return {
+                "original_image": original_base64,
+                "generated_image": generated_base64
+            }
+        finally:
+            # 一時ファイルの削除
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
     except Exception as e:
-        logger.error(f"画像生成中にエラーが発生: {str(e)}")
-        return {"error": str(e)}
+        error_msg = f"画像生成中にエラーが発生: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.post("/generate/from-text")
 async def generate_from_text(prompt: str = Form(...), options: DesignOptions = None):

@@ -1,0 +1,18 @@
+2025-04-14 19:28:24,085 - app - INFO - 画像生成リクエストを受信: GfnLuNEaAAAhudJ.jpeg
+2025-04-14 19:28:25,325 - app - INFO - 画像生成を開始
+2025-04-14 19:28:25,594 - app - ERROR - 画像生成中にエラーが発生: n_components=50 must be between 0 and min(n_samples, n_features)=1 with svd_solver='full'
+2025-04-14 19:29:42,724 - app - INFO - 画像生成リクエストを受信: GdztRHsbYAAaeid.jpeg
+2025-04-14 19:29:43,529 - app - INFO - 画像生成を開始
+2025-04-14 19:29:43,787 - app - ERROR - 画像生成中にエラーが発生: Expected n_neighbors <= n_samples,  but n_samples = 1, n_neighbors = 5
+2025-04-14 19:31:20,671 - app - INFO - 画像生成リクエストを受信: GdztRHsbYAAaeid.jpeg
+2025-04-14 19:31:21,621 - app - INFO - 画像生成を開始
+2025-04-14 19:31:22,946 - app - INFO - 画像生成が完了
+2025-04-14 19:33:04,433 - app - INFO - 画像生成リクエストを受信: GfnLuNEaAAAhudJ.jpeg
+2025-04-14 19:33:05,894 - app - INFO - 画像生成を開始
+2025-04-14 19:33:08,956 - app - INFO - 画像生成が完了
+2025-04-14 19:35:26,433 - app - INFO - 画像生成リクエストを受信: GhsOCWpbQAAUXdU.jpeg
+2025-04-14 19:35:29,378 - app - INFO - 画像生成を開始
+2025-04-14 19:35:29,840 - app - INFO - 画像生成が完了
+2025-04-14 19:37:31,300 - app - INFO - 画像生成リクエストを受信: GfAb1mUb0AIM8uf.jpeg
+2025-04-14 19:37:32,492 - app - INFO - 画像生成を開始
+2025-04-14 19:37:33,734 - app - INFO - 画像生成が完了

@@ -21,10 +21,9 @@ class DesignGenerator:
         """画像を読み込んで前処理を行う"""
         img = Image.open(image_path)
         img = img.resize((32, 32))  # サイズを統一
+        img = img.convert('RGB')  # RGBモードに変換
         img_array = np.array(img)
-        if len(img_array.shape) == 3:  # カラー画像の場合
-            img_array = img_array.reshape(-1)  # 1次元に変換
-        return img_array
+        return img_array.reshape(-1)  # 1次元に変換（3072要素: 32x32x3）
 
     def train(self):
         """学習用画像から特徴量を抽出"""
@@ -52,7 +51,18 @@ class DesignGenerator:
 
         # 特徴量抽出
         X = np.array(image_data)
+        n_samples = len(image_data)
+        n_features = X.shape[1]
+        
+        # PCAの次元数を動的に調整
+        n_components = min(50, n_samples, n_features)
+        self.pca = PCA(n_components=n_components)
+        
         self.features = self.pca.fit_transform(X)
+        
+        # NearestNeighborsのn_neighborsを動的に調整
+        n_neighbors = min(5, n_samples)
+        self.nn = NearestNeighbors(n_neighbors=n_neighbors)
         self.nn.fit(self.features)
         
         # テキスト特徴量の学習

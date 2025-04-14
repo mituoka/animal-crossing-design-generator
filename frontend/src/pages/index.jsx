@@ -4,8 +4,8 @@ import UploadForm from "../components/UploadForm";
 import TextPromptForm from "../components/TextPromptForm";
 import DesignDisplay from "../components/DesignDisplay";
 import Tabs from "../components/Tabs";
-import axios from "axios";
 import { Box, Typography, CircularProgress, Alert } from "@mui/material";
+import api from "../lib/api";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("upload");
@@ -35,23 +35,21 @@ export default function Home() {
       formData.append("palette_size", 15);
       formData.append("style", "pixel");
 
-      let response;
-      if (mode === "direct") {
-        response = await axios.post("/api/generate/from-image", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      } else {
-        response = await axios.post("/api/generate/similar-image", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      }
+      const response = await api.post("/api/generate/from-image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      if (response.data && response.data.success) {
-        handleDesignGenerated(response.data);
+      if (response.data && response.data.generated_image) {
+        setGeneratedDesign({
+          original_image: response.data.original_image,
+          generated_image: response.data.generated_image,
+          size: 32,
+          paletteSize: 15,
+          design_id: Date.now().toString(), // 一時的なデザインID
+        });
+        setIsLoading(false);
       } else {
         handleError("デザインの生成に失敗しました");
       }
@@ -73,7 +71,7 @@ export default function Home() {
       formData.append("size", data.size);
       formData.append("palette_size", data.paletteSize);
 
-      const response = await axios.post("/api/generate/from-text", formData, {
+      const response = await api.post("/api/generate/from-text", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
