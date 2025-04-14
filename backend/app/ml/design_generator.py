@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
+from sklearn.feature_extraction.text import TfidfVectorizer
+import re
 
 class DesignGenerator:
     def __init__(self, training_dir="data/training_images"):
@@ -11,6 +13,8 @@ class DesignGenerator:
         self.nn = NearestNeighbors(n_neighbors=5)
         self.features = None
         self.images = []
+        self.image_descriptions = {}  # 画像の説明文を保持
+        self.tfidf = TfidfVectorizer(max_features=1000)
         self.is_trained = False
 
     def load_and_preprocess_image(self, image_path):
@@ -25,6 +29,7 @@ class DesignGenerator:
     def train(self):
         """学習用画像から特徴量を抽出"""
         image_data = []
+        descriptions = []
         
         # 学習用画像の読み込み
         for filename in os.listdir(self.training_dir):
@@ -34,6 +39,11 @@ class DesignGenerator:
                     img_array = self.load_and_preprocess_image(image_path)
                     image_data.append(img_array)
                     self.images.append(image_path)
+                    
+                    # ファイル名から説明文を生成
+                    description = re.sub(r'[_-]', ' ', os.path.splitext(filename)[0])
+                    descriptions.append(description)
+                    self.image_descriptions[image_path] = description
                 except Exception as e:
                     print(f"Error loading {filename}: {e}")
 
@@ -44,6 +54,9 @@ class DesignGenerator:
         X = np.array(image_data)
         self.features = self.pca.fit_transform(X)
         self.nn.fit(self.features)
+        
+        # テキスト特徴量の学習
+        self.tfidf.fit(descriptions)
         self.is_trained = True
 
     def generate_from_image(self, input_image_path):
@@ -63,11 +76,36 @@ class DesignGenerator:
         return Image.open(similar_image_path)
 
     def generate_from_text(self, text_prompt):
-        """テキストプロンプトから画像を生成（ランダムな学習画像を返す）"""
+        """テキストプロンプトから画像を生成"""
         if not self.is_trained:
             self.train()
 
-        # ここでは簡単のためにランダムな学習画像を返す
-        # 実際のテキストベースの生成はより複雑なモデルが必要
-        random_index = np.random.randint(0, len(self.images))
-        return Image.open(self.images[random_index]) 
+        # テキストプロンプトの特徴量を抽出
+        prompt_features = self.tfidf.transform([text_prompt]).toarray()
+        
+        # 各画像の説明文との類似度を計算
+        similarities = []
+        for img_path in self.images:
+            desc = self.image_descriptions[img_path]
+            desc_features = self.tfidf.transform([desc]).toarray()
+            similarity = np.dot(prompt_features, desc_features.T)[0][0]
+            similarities.append(similarity)
+        
+        # 最も類似度の高い3つの画像を選択
+        top_indices = np.argsort(similarities)[-3:][::-1]
+        
+        # 選択された画像を組み合わせて新しい画像を生成
+        combined_image = Image.new('RGB', (32, 32))
+        for i, idx in enumerate(top_indices):
+            img = Image.open(self.images[idx])
+            img = img.resize((32, 32))
+            # 重み付けして画像を合成
+            weight = similarities[idx] / sum(similarities[j] for j in top_indices)
+            img_array = np.array(img) * weight
+            if i == 0:
+                combined_array = img_array
+            else:
+                combined_array += img_array
+        
+        combined_array = np.clip(combined_array, 0, 255).astype(np.uint8)
+        return Image.fromarray(combined_array) 
