@@ -1,187 +1,137 @@
-import React, { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import axios from "axios";
+import React, { useState } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
+import Button from "./Button";
 
-const UploadForm = ({ onDesignGenerated, onError, setIsLoading }) => {
+const UploadForm = ({ onSubmit, isLoading }) => {
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
-  const [size, setSize] = useState(32);
-  const [paletteSize, setPaletteSize] = useState(15);
-  const [style, setStyle] = useState("pixel");
+  const [preview, setPreview] = useState(null);
+  const [mode, setMode] = useState("direct");
 
-  const onDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
-      const selectedFile = acceptedFiles[0];
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
       setFile(selectedFile);
-
-      // プレビュー用にURLを生成
-      const objectUrl = URL.createObjectURL(selectedFile);
-      setPreview(objectUrl);
-
-      // コンポーネントがアンマウントされたときにURLを解放
-      return () => URL.revokeObjectURL(objectUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(selectedFile);
     }
-  }, []);
+  };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif"],
-    },
-    maxFiles: 1,
-  });
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!file) {
-      onError("画像ファイルをアップロードしてください");
-      return;
+  const handleModeChange = (event, newMode) => {
+    if (newMode !== null) {
+      setMode(newMode);
     }
+  };
 
-    setIsLoading(true);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("size", size);
-    formData.append("palette_size", paletteSize);
-    formData.append("style", style);
-
-    try {
-      const response = await axios.post("/api/generate/from-image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      if (response.data && response.data.success) {
-        onDesignGenerated(response.data);
-      } else {
-        onError("デザインの生成に失敗しました");
-      }
-    } catch (error) {
-      console.error("Error generating design:", error);
-      onError(
-        error.response?.data?.detail || "デザインの生成中にエラーが発生しました"
-      );
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (file) {
+      onSubmit(file, mode);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-6">
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive
-              ? "border-ac-green bg-green-50"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <form onSubmit={handleSubmit}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+          }}
         >
-          <input {...getInputProps()} />
+          <Typography variant="h6" component="h2" gutterBottom>
+            画像をアップロード
+          </Typography>
 
-          {preview ? (
-            <div className="flex flex-col items-center">
-              <img
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 400,
+              height: 200,
+              border: "2px dashed",
+              borderColor: "primary.main",
+              borderRadius: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
+              cursor: "pointer",
+              "&:hover": {
+                borderColor: "primary.dark",
+                bgcolor: "action.hover",
+              },
+            }}
+            component="label"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+            {preview ? (
+              <Box
+                component="img"
                 src={preview}
-                alt="アップロード画像プレビュー"
-                className="max-h-64 max-w-full mb-4"
+                alt="Preview"
+                sx={{
+                  maxWidth: "100%",
+                  maxHeight: 150,
+                  objectFit: "contain",
+                }}
               />
-              <p className="text-sm text-gray-500">
-                クリックまたはドラッグ＆ドロップで画像を変更
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <svg
-                className="w-12 h-12 text-gray-400 mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                ></path>
-              </svg>
-              <p className="text-gray-600 mb-2">
-                クリックまたはドラッグ＆ドロップで画像をアップロード
-              </p>
-              <p className="text-sm text-gray-500">PNG, JPG, GIF (最大10MB)</p>
-            </div>
-          )}
-        </div>
-      </div>
+            ) : (
+              <>
+                <Typography variant="body1" color="textSecondary" gutterBottom>
+                  クリックしてファイルを選択
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  またはドラッグ＆ドロップ
+                </Typography>
+              </>
+            )}
+          </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div>
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="size"
+          <Box
+            sx={{ width: "100%", display: "flex", justifyContent: "center" }}
           >
-            サイズ ({size}x{size}px)
-          </label>
-          <input
-            id="size"
-            type="range"
-            min="16"
-            max="64"
-            step="8"
-            value={size}
-            onChange={(e) => setSize(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
+            <ToggleButtonGroup
+              value={mode}
+              exclusive
+              onChange={handleModeChange}
+              aria-label="生成モード"
+            >
+              <ToggleButton value="direct" aria-label="直接変換">
+                直接変換
+              </ToggleButton>
+              <ToggleButton value="ai" aria-label="AI生成">
+                AI生成
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
 
-        <div>
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="paletteSize"
+          <Button
+            type="submit"
+            disabled={!file || isLoading}
+            variant="contained"
+            sx={{ mt: 2 }}
           >
-            色数 ({paletteSize}色)
-          </label>
-          <input
-            id="paletteSize"
-            type="range"
-            min="2"
-            max="15"
-            value={paletteSize}
-            onChange={(e) => setPaletteSize(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-
-        <div>
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="style"
-          >
-            スタイル
-          </label>
-          <select
-            id="style"
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ac-green"
-          >
-            <option value="pixel">ピクセルアート</option>
-            <option value="simple">シンプル</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex justify-center">
-        <button
-          type="submit"
-          className="bg-ac-green hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ac-green"
-        >
-          マイデザインを生成する
-        </button>
-      </div>
-    </form>
+            {isLoading ? "生成中..." : "マイデザインを生成する"}
+          </Button>
+        </Box>
+      </form>
+    </Paper>
   );
 };
 

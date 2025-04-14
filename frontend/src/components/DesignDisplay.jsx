@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import Button from "./Button";
+import { Box, Typography, Grid, Paper } from "@mui/material";
 
-const DesignDisplay = ({ design }) => {
+const DesignDisplay = ({ design, onDownload, onRegenerate }) => {
   const [showGrid, setShowGrid] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(10); // ピクセル単位でのズームレベル
 
@@ -101,67 +103,111 @@ const DesignDisplay = ({ design }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex flex-col md:flex-row md:items-start gap-6">
-        <div className="flex-1">
-          <img
-            src={design.image}
-            alt="生成されたマイデザイン"
-            className="max-w-full h-auto rounded border border-gray-200"
-          />
+    <Box>
+      <Grid container spacing={3}>
+        {design.original_image && (
+          <Grid item xs={12} md={6}>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                元の画像
+              </Typography>
+              <Box
+                component="img"
+                src={`data:image/png;base64,${design.original_image}`}
+                alt="元の画像"
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  borderRadius: 1,
+                }}
+              />
+            </Paper>
+          </Grid>
+        )}
+        {design.generated_image && (
+          <Grid item xs={12} md={6}>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                生成された画像
+              </Typography>
+              <Box
+                component="img"
+                src={`data:image/png;base64,${design.generated_image}`}
+                alt="生成された画像"
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  borderRadius: 1,
+                }}
+              />
+            </Paper>
+          </Grid>
+        )}
+        {design.pixel_art && (
+          <Grid item xs={12}>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                マイデザイン
+              </Typography>
+              <Box
+                component="img"
+                src={`data:image/png;base64,${design.pixel_art}`}
+                alt="マイデザイン"
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  borderRadius: 1,
+                }}
+              />
+            </Paper>
+          </Grid>
+        )}
+      </Grid>
 
-          {renderPalette()}
-        </div>
-
-        <div className="flex-1">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">拡大表示</h3>
-            <div className="flex items-center gap-4 mb-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={showGrid}
-                  onChange={() => setShowGrid(!showGrid)}
-                  className="mr-2"
-                />
-                グリッド表示
-              </label>
-
-              <div className="flex items-center">
-                <span className="mr-2">ズーム:</span>
-                <input
-                  type="range"
-                  min="5"
-                  max="20"
-                  value={zoomLevel}
-                  onChange={(e) => setZoomLevel(parseInt(e.target.value))}
-                  className="w-32"
-                />
-                <span className="ml-2">{zoomLevel}px</span>
-              </div>
+      <div className="space-y-6">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            デザイン情報
+          </h3>
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">サイズ</dt>
+              <dd className="text-sm text-gray-900">
+                {design.size}x{design.size}px
+              </dd>
             </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">使用色数</dt>
+              <dd className="text-sm text-gray-900">{design.paletteSize}色</dd>
+            </div>
+            {design.prompt && (
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">
+                  プロンプト
+                </dt>
+                <dd className="text-sm text-gray-900">{design.prompt}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
 
-            {renderPixelGrid()}
-          </div>
+        <div className="mt-6 flex flex-wrap gap-4 justify-center">
+          <button
+            onClick={downloadImage}
+            className="bg-ac-blue hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            画像をダウンロード
+          </button>
+
+          <button
+            onClick={copyDesignCode}
+            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            デザインコードをコピー
+          </button>
         </div>
       </div>
-
-      <div className="mt-6 flex flex-wrap gap-4 justify-center">
-        <button
-          onClick={downloadImage}
-          className="bg-ac-blue hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
-        >
-          画像をダウンロード
-        </button>
-
-        <button
-          onClick={copyDesignCode}
-          className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
-        >
-          デザインコードをコピー
-        </button>
-      </div>
-    </div>
+    </Box>
   );
 };
 
