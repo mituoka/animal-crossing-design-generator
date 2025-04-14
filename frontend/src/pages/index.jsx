@@ -158,16 +158,16 @@ export default function Home() {
               </Typography>
             </Alert>
           )}
-
-          {generatedDesign && !isLoading && !error && (
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h5" component="h2" gutterBottom>
-                生成されたマイデザイン
-              </Typography>
-              <DesignDisplay design={generatedDesign} />
-            </Box>
-          )}
         </Box>
+
+        {generatedDesign && !isLoading && !error && (
+          <Box sx={{ mt: 4, maxWidth: 800, mx: "auto", px: 2 }}>
+            <Typography variant="h5" component="h2" gutterBottom>
+              生成されたマイデザイン
+            </Typography>
+            <DesignDisplay design={generatedDesign} />
+          </Box>
+        )}
       </Box>
 
       <Box

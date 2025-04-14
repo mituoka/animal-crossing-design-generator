@@ -34,7 +34,6 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-.env
 venv/
 ENV/
 
@@ -43,6 +42,11 @@ ENV/
 
 # OS 関連
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 .directory
 *~
@@ -54,5 +58,8 @@ Thumbs.db
 *.swo
 
 # アップロード・生成ファイル
+backend/data/training_images/
+backend/models/
+backend/temp_input.png
 backend/uploads/
 backend/outputs/

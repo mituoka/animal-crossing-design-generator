@@ -11,6 +11,9 @@ import base64
 from io import BytesIO
 import requests
 import json
+import io
+from PIL import Image
+from app.ml.design_generator import DesignGenerator
 
 app = FastAPI(title="Animal Crossing Design Generator API")
 
@@ -32,6 +35,9 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# 画像生成モデルのインスタンスを作成
+generator = DesignGenerator()
+
 class DesignOptions(BaseModel):
     size: int = 32  # Animal Crossingのデザインサイズ（通常は32x32）
     palette_size: int = 15  # 使用する色数（Animal Crossingは最大15色）
@@ -41,160 +47,37 @@ class DesignOptions(BaseModel):
 def read_root():
     return {"message": "Welcome to Animal Crossing Design Generator API"}
 
-@app.post("/generate/from-image")
-async def generate_from_image(
-    file: UploadFile = File(...),
-    size: int = Form(32),
-    palette_size: int = Form(15),
-    style: str = Form("pixel")
-):
-    # アップロードされたファイルの検証
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Uploaded file must be an image")
-    
-    # 一時ファイルに保存
-    file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
-    
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        # ピクセルアート生成
-        output_path = os.path.join(OUTPUT_DIR, f"{file_id}_output.png")
-        design_data = generate_pixel_art(
-            input_path=file_path,
-            output_path=output_path,
-            size=size,
-            palette_size=palette_size,
-            style=style
-        )
-        
-        # Base64エンコードされた画像データを返す
-        with open(output_path, "rb") as img_file:
-            img_data = img_file.read()
-            base64_img = base64.b64encode(img_data).decode("utf-8")
-        
-        return {
-            "success": True,
-            "design_id": file_id,
-            "image": f"data:image/png;base64,{base64_img}",
-            "design_data": design_data
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating design: {str(e)}")
-    
-    finally:
-        # 一時ファイルの削除（必要に応じて）
-        if os.path.exists(file_path):
-            os.remove(file_path)
+def image_to_base64(image: Image.Image) -> str:
+    """PIL Imageをbase64文字列に変換"""
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
 
-@app.post("/generate/similar-image")
-async def generate_similar_image(
-    file: UploadFile = File(...),
-    size: int = Form(32),
-    palette_size: int = Form(15),
-    style: str = Form("pixel")
-):
-    # アップロードされたファイルの検証
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Uploaded file must be an image")
-    
-    # 一時ファイルに保存
-    file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
-    
+@app.post("/api/generate/from-image")
+async def generate_from_image(file: UploadFile = File(...)):
+    """画像から類似のマイデザインを生成"""
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # アップロードされた画像を読み込み
+        contents = await file.read()
+        input_image = Image.open(io.BytesIO(contents))
         
-        # 画像をBase64エンコード
-        with open(file_path, "rb") as img_file:
-            img_data = img_file.read()
-            base64_img = base64.b64encode(img_data).decode("utf-8")
+        # 一時的にファイルに保存
+        temp_path = "temp_input.png"
+        input_image.save(temp_path)
         
-        # Stability AI APIを使用して類似画像を生成
-        # 注意: 実際のAPIキーは環境変数から取得するべきです
-        api_key = os.getenv("STABILITY_API_KEY", "your-api-key-here")
+        # 画像生成
+        generated_image = generator.generate_from_image(temp_path)
         
-        # APIリクエストの準備
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
-        
-        # 画像生成のプロンプトを作成
-        prompt = "Animal Crossing style pixel art, cute, colorful, simple design"
-        
-        # APIリクエストのボディ
-        body = {
-            "text_prompts": [{"text": prompt}],
-            "cfg_scale": 7,
-            "height": 512,
-            "width": 512,
-            "samples": 1,
-            "steps": 30,
-            "style_preset": "pixel-art"
-        }
-        
-        # APIリクエストの送信
-        response = requests.post(
-            "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
-            headers=headers,
-            json=body
-        )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Error from AI API: {response.text}")
-        
-        # レスポンスの解析
-        response_data = response.json()
-        
-        # 生成された画像を取得
-        generated_image_data = response_data["artifacts"][0]["base64"]
-        
-        # Base64デコードして画像を保存
-        generated_image_bytes = base64.b64decode(generated_image_data)
-        generated_image_path = os.path.join(UPLOAD_DIR, f"{file_id}_generated.png")
-        
-        with open(generated_image_path, "wb") as img_file:
-            img_file.write(generated_image_bytes)
-        
-        # 生成された画像からピクセルアートを生成
-        output_path = os.path.join(OUTPUT_DIR, f"{file_id}_output.png")
-        design_data = generate_pixel_art(
-            input_path=generated_image_path,
-            output_path=output_path,
-            size=size,
-            palette_size=palette_size,
-            style=style
-        )
-        
-        # 生成されたピクセルアートをBase64エンコード
-        with open(output_path, "rb") as img_file:
-            img_data = img_file.read()
-            base64_output = base64.b64encode(img_data).decode("utf-8")
+        # base64エンコード
+        original_base64 = image_to_base64(input_image)
+        generated_base64 = image_to_base64(generated_image)
         
         return {
-            "success": True,
-            "design_id": file_id,
-            "original_image": f"data:image/png;base64,{base64_img}",
-            "generated_image": f"data:image/png;base64,{generated_image_data}",
-            "pixel_art": f"data:image/png;base64,{base64_output}",
-            "design_data": design_data
+            "original_image": original_base64,
+            "generated_image": generated_base64
         }
-    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating similar image: {str(e)}")
-    
-    finally:
-        # 一時ファイルの削除
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        if 'generated_image_path' in locals() and os.path.exists(generated_image_path):
-            os.remove(generated_image_path)
+        return {"error": str(e)}
 
 @app.post("/generate/from-text")
 async def generate_from_text(prompt: str = Form(...), options: DesignOptions = None):
