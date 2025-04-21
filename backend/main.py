@@ -13,7 +13,7 @@ import requests
 import json
 import io
 from PIL import Image
-from app.ml.design_generator import DesignGenerator
+from app.ml.stable_diffusion_generator import StableDiffusionGenerator
 from app.core.logger import setup_logger
 
 # ロガーの設定
@@ -40,12 +40,13 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # 画像生成モデルのインスタンスを作成
-generator = DesignGenerator()
+generator = StableDiffusionGenerator()
 
 class DesignOptions(BaseModel):
     size: int = 32  # Animal Crossingのデザインサイズ（通常は32x32）
     palette_size: int = 15  # 使用する色数（Animal Crossingは最大15色）
     style: str = "pixel"  # 変換スタイル
+    prompt: Optional[str] = None  # 追加のプロンプト
 
 @app.get("/")
 def read_root():
@@ -58,83 +59,73 @@ def image_to_base64(image: Image.Image) -> str:
     return base64.b64encode(buffered.getvalue()).decode()
 
 @app.post("/api/generate/from-image")
-async def generate_from_image(file: UploadFile = File(...)):
+async def generate_from_image(
+    file: UploadFile = File(...),
+    options: Optional[DesignOptions] = None
+):
     """画像から類似のマイデザインを生成"""
     try:
         logger.info(f"画像生成リクエストを受信: {file.filename}")
+        
+        if options is None:
+            options = DesignOptions()
         
         # アップロードされた画像を読み込み
         contents = await file.read()
         input_image = Image.open(io.BytesIO(contents))
         
-        # 一時ファイルのパスを設定
-        temp_path = os.path.join(UPLOAD_DIR, f"temp_{uuid.uuid4()}.png")
+        # 画像生成
+        logger.info("画像生成を開始")
+        generated_image = generator.generate_from_image(
+            input_image,
+            prompt=options.prompt,
+            strength=0.75  # 元の画像の特徴をどの程度保持するか（0-1）
+        )
+        logger.info("画像生成が完了")
         
-        try:
-            # 一時的にファイルに保存
-            input_image.save(temp_path)
-            
-            # 画像生成
-            logger.info("画像生成を開始")
-            generated_image = generator.generate_from_image(temp_path)
-            logger.info("画像生成が完了")
-            
-            # base64エンコード
-            original_base64 = f"data:image/png;base64,{image_to_base64(input_image)}"
-            generated_base64 = f"data:image/png;base64,{image_to_base64(generated_image)}"
-            
-            return {
-                "original_image": original_base64,
-                "generated_image": generated_base64
-            }
-        finally:
-            # 一時ファイルの削除
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+        # base64エンコード
+        original_base64 = f"data:image/png;base64,{image_to_base64(input_image)}"
+        generated_base64 = f"data:image/png;base64,{image_to_base64(generated_image)}"
+        
+        return {
+            "original_image": original_base64,
+            "generated_image": generated_base64
+        }
                 
     except Exception as e:
         error_msg = f"画像生成中にエラーが発生: {str(e)}"
         logger.error(error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
-@app.post("/generate/from-text")
-async def generate_from_text(prompt: str = Form(...), options: DesignOptions = None):
-    if options is None:
-        options = DesignOptions()
-    
+@app.post("/api/generate/from-text")
+async def generate_from_text(prompt: str = Form(...), options: Optional[DesignOptions] = None):
+    """テキストプロンプトから画像を生成"""
     try:
         logger.info(f"テキスト生成リクエストを受信: {prompt}")
         
-        # 一意のIDを生成
-        design_id = str(uuid.uuid4())
-        output_path = os.path.join(OUTPUT_DIR, f"{design_id}_output.png")
+        if options is None:
+            options = DesignOptions()
         
-        # テキストプロンプトからピクセルアートを生成
-        logger.info("ピクセルアート生成を開始")
-        design_data = generate_pixel_art(
-            input_text=prompt,
-            output_path=output_path,
-            size=options.size,
-            palette_size=options.palette_size,
-            style=options.style
+        # 画像生成
+        logger.info("画像生成を開始")
+        generated_image = generator.generate_from_text(
+            prompt=prompt,
+            negative_prompt="low quality, bad quality, blurry"
         )
-        logger.info("ピクセルアート生成が完了")
+        logger.info("画像生成が完了")
         
-        # Base64エンコードされた画像データを返す
-        with open(output_path, "rb") as img_file:
-            img_data = img_file.read()
-            base64_img = base64.b64encode(img_data).decode("utf-8")
+        # base64エンコード
+        generated_base64 = f"data:image/png;base64,{image_to_base64(generated_image)}"
         
         return {
             "success": True,
-            "design_id": design_id,
-            "image": f"data:image/png;base64,{base64_img}",
-            "design_data": design_data
+            "generated_image": generated_base64
         }
     
     except Exception as e:
-        logger.error(f"テキスト生成中にエラーが発生: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating design: {str(e)}")
+        error_msg = f"画像生成中にエラーが発生: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/designs/{design_id}")
 async def get_design(design_id: str):
