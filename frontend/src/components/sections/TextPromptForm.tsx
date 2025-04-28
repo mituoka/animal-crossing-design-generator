@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Typography, TextField, Slider, Paper } from "@mui/material";
-import Button from "./Button";
+import Button from "../atoms/Button";
 
 interface TextPromptFormProps {
   onDesignGenerated: (design: any) => void;

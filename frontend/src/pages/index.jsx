@@ -1,9 +1,9 @@
 import Head from "next/head";
 import { useState } from "react";
-import UploadForm from "../components/UploadForm";
-import TextPromptForm from "../components/TextPromptForm";
-import DesignDisplay from "../components/DesignDisplay";
-import Tabs from "../components/Tabs";
+import UploadForm from "../components/sections/UploadForm";
+import TextPromptForm from "../components/sections/TextPromptForm";
+import DesignDisplay from "../components/sections/DesignDisplay";
+import Tabs from "../components/sections/Tabs";
 import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 import api from "../lib/api";
 
