@@ -103,6 +103,31 @@ const UploadForm = ({ onSubmit, isLoading }) => {
             )}
           </Box>
 
+          {file && (
+            <Typography variant="body2" color="textSecondary">
+              選択されたファイル: {file.name}
+            </Typography>
+          )}
+
+          {preview && (
+            <Box
+              sx={{ mt: 2, mb: 2, display: "flex", justifyContent: "center" }}
+            >
+              <Box
+                component="img"
+                src={preview}
+                alt="Preview"
+                sx={{
+                  maxWidth: 300,
+                  maxHeight: 200,
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  objectFit: "contain",
+                }}
+              />
+            </Box>
+          )}
+
           <Box
             sx={{ width: "100%", display: "flex", justifyContent: "center" }}
           >

@@ -119,7 +119,7 @@ export default function Home() {
         </Typography>
 
         <Box sx={{ maxWidth: 800, mx: "auto", px: 2 }}>
-          <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
           <Box sx={{ mt: 3 }}>
             {activeTab === "upload" ? (
