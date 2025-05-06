@@ -18,6 +18,9 @@ COPY requirements.txt .
 # その他の依存関係をインストール
 RUN pip install --no-cache-dir -r requirements.txt
 
+# 開発用の依存関係をインストール
+RUN pip install --no-cache-dir black==23.12.1 flake8==6.1.0 pylint==2.17.5
+
 # Hugging Faceのキャッシュディレクトリを作成
 RUN mkdir -p /root/.cache/huggingface
 

@@ -6,6 +6,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
 
+
 class DesignGenerator:
     def __init__(self, training_dir="data/training_images"):
         self.training_dir = training_dir
@@ -21,7 +22,7 @@ class DesignGenerator:
         """画像を読み込んで前処理を行う"""
         img = Image.open(image_path)
         img = img.resize((32, 32))  # サイズを統一
-        img = img.convert('RGB')  # RGBモードに変換
+        img = img.convert("RGB")  # RGBモードに変換
         img_array = np.array(img)
         return img_array.reshape(-1)  # 1次元に変換（3072要素: 32x32x3）
 
@@ -29,18 +30,18 @@ class DesignGenerator:
         """学習用画像から特徴量を抽出"""
         image_data = []
         descriptions = []
-        
+
         # 学習用画像の読み込み
         for filename in os.listdir(self.training_dir):
-            if filename.endswith(('.png', '.jpg', '.jpeg')):
+            if filename.endswith((".png", ".jpg", ".jpeg")):
                 image_path = os.path.join(self.training_dir, filename)
                 try:
                     img_array = self.load_and_preprocess_image(image_path)
                     image_data.append(img_array)
                     self.images.append(image_path)
-                    
+
                     # ファイル名から説明文を生成
-                    description = re.sub(r'[_-]', ' ', os.path.splitext(filename)[0])
+                    description = re.sub(r"[_-]", " ", os.path.splitext(filename)[0])
                     descriptions.append(description)
                     self.image_descriptions[image_path] = description
                 except Exception as e:
@@ -53,18 +54,18 @@ class DesignGenerator:
         X = np.array(image_data)
         n_samples = len(image_data)
         n_features = X.shape[1]
-        
+
         # PCAの次元数を動的に調整
         n_components = min(50, n_samples, n_features)
         self.pca = PCA(n_components=n_components)
-        
+
         self.features = self.pca.fit_transform(X)
-        
+
         # NearestNeighborsのn_neighborsを動的に調整
         n_neighbors = min(5, n_samples)
         self.nn = NearestNeighbors(n_neighbors=n_neighbors)
         self.nn.fit(self.features)
-        
+
         # テキスト特徴量の学習
         self.tfidf.fit(descriptions)
         self.is_trained = True
@@ -80,7 +81,7 @@ class DesignGenerator:
 
         # 最も近い特徴量を持つ画像を探す
         distances, indices = self.nn.kneighbors(input_features)
-        
+
         # 最も類似度の高い画像を返す
         similar_image_path = self.images[indices[0][0]]
         return Image.open(similar_image_path)
@@ -92,7 +93,7 @@ class DesignGenerator:
 
         # テキストプロンプトの特徴量を抽出
         prompt_features = self.tfidf.transform([text_prompt]).toarray()
-        
+
         # 各画像の説明文との類似度を計算
         similarities = []
         for img_path in self.images:
@@ -100,12 +101,12 @@ class DesignGenerator:
             desc_features = self.tfidf.transform([desc]).toarray()
             similarity = np.dot(prompt_features, desc_features.T)[0][0]
             similarities.append(similarity)
-        
+
         # 最も類似度の高い3つの画像を選択
         top_indices = np.argsort(similarities)[-3:][::-1]
-        
+
         # 選択された画像を組み合わせて新しい画像を生成
-        combined_image = Image.new('RGB', (32, 32))
+        combined_image = Image.new("RGB", (32, 32))
         for i, idx in enumerate(top_indices):
             img = Image.open(self.images[idx])
             img = img.resize((32, 32))
@@ -116,6 +117,6 @@ class DesignGenerator:
                 combined_array = img_array
             else:
                 combined_array += img_array
-        
+
         combined_array = np.clip(combined_array, 0, 255).astype(np.uint8)
-        return Image.fromarray(combined_array) 
+        return Image.fromarray(combined_array)
