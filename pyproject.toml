@@ -14,5 +14,6 @@ exclude = '''
   | build
   | dist
   | site-packages
+  | .*lib/
 )/
 ''' 
