@@ -123,7 +123,11 @@ export default function Home() {
 
           <Box sx={{ mt: 3 }}>
             {activeTab === "upload" ? (
-              <UploadForm onSubmit={handleUploadSubmit} isLoading={isLoading} />
+              <UploadForm
+                onSubmit={handleUploadSubmit}
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+              />
             ) : (
               <TextPromptForm
                 onSubmit={handleTextSubmit}

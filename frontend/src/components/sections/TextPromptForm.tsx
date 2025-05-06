@@ -24,6 +24,7 @@ const TextPromptForm: React.FC<TextPromptFormProps> = ({
   const [paletteSize, setPaletteSize] = useState<number>(15);
   const [style, setStyle] = useState<string>("pixel");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoadingState] = useState<boolean>(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,7 +35,7 @@ const TextPromptForm: React.FC<TextPromptFormProps> = ({
     }
 
     setIsSubmitting(true);
-    setIsLoading(true);
+    setIsLoadingState(true);
 
     try {
       onSubmit({
@@ -49,6 +50,7 @@ const TextPromptForm: React.FC<TextPromptFormProps> = ({
       );
     } finally {
       setIsSubmitting(false);
+      setIsLoadingState(false);
     }
   };
 
@@ -96,10 +98,13 @@ const TextPromptForm: React.FC<TextPromptFormProps> = ({
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Button
               type="submit"
-              disabled={!prompt.trim() || isSubmitting}
+              disabled={isSubmitting || isLoading}
               variant="contained"
+              onClick={handleSubmit}
             >
-              {isSubmitting ? "生成中..." : "マイデザインを生成する"}
+              {isSubmitting || isLoading
+                ? "生成中..."
+                : "マイデザインを生成する"}
             </Button>
           </Box>
         </Box>
