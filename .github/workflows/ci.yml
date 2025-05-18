@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Python Lint/Format/Security
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install Python dependencies
+        run: pip install black flake8 bandit pip-audit
+      - name: Run Black
+        run: black --check backend/
+      - name: Run Flake8
+        run: flake8 backend/
+      - name: Run Bandit (セキュリティ)
+        run: bandit -r backend/
+      - name: Run pip-audit (依存脆弱性)
+        run: pip-audit
+
+      # JavaScript Lint/Format
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: Install JS dependencies
+        run: cd frontend && npm ci
+      - name: Run ESLint
+        run: cd frontend && npx eslint .
+      - name: Run Prettier
+        run: cd frontend && npx prettier --check .
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-format
+    steps:
+      - uses: actions/checkout@v3
+
+      # Python Test
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements.txt pytest
+      - name: Run Pytest
+        run: pytest backend/
+
+      # JavaScript Test
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: Install JS dependencies
+        run: cd frontend && npm ci
+      - name: Run Jest
+        run: cd frontend && npx jest
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker images
+        run: docker-compose build
+
+  # 必要に応じてE2Eテストやデプロイも追加可能
