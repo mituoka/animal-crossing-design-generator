@@ -8,7 +8,7 @@ import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 import api from "../lib/api";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState("text");
   const [generatedDesign, setGeneratedDesign] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -91,7 +91,7 @@ export default function Home() {
   };
 
   const tabs = [
-    { id: "upload", label: "画像からマイデザイン作成" },
+    // { id: "upload", label: "画像からマイデザイン作成" },
     { id: "text", label: "テキストからマイデザイン作成" },
   ];
 
@@ -122,18 +122,16 @@ export default function Home() {
           <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
           <Box sx={{ mt: 3 }}>
-            {activeTab === "upload" ? (
+            {/* 画像からマイデザイン作成フォームを一時的に非表示 */}
+            {/* {activeTab === "upload" ? (
               <UploadForm
                 onSubmit={handleUploadSubmit}
                 isLoading={isLoading}
                 setIsLoading={setIsLoading}
               />
-            ) : (
-              <TextPromptForm
-                onSubmit={handleTextSubmit}
-                isLoading={isLoading}
-              />
-            )}
+            ) : ( */}
+            <TextPromptForm onSubmit={handleTextSubmit} isLoading={isLoading} />
+            {/* )} */}
           </Box>
 
           {isLoading && (

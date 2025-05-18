@@ -16,7 +16,7 @@ interface DesignData {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<string>("upload");
+  const [activeTab, setActiveTab] = useState<string>("text");
   const [generatedDesign, setGeneratedDesign] = useState<DesignData | null>(
     null
   );
@@ -105,7 +105,8 @@ export default function Home() {
   };
 
   const tabs = [
-    { id: "upload", label: "画像からマイデザイン作成" },
+    // 画像からマイデザイン作成のタブを一時的に非表示
+    // { id: "upload", label: "画像からマイデザイン作成" },
     { id: "text", label: "テキストからマイデザイン作成" },
   ];
 
@@ -137,14 +138,15 @@ export default function Home() {
             </Alert>
           )}
 
-          {activeTab === "upload" && (
+          {/* 画像からマイデザイン作成のフォームを一時的に非表示 */}
+          {/* {activeTab === "upload" && (
             <UploadForm
               onDesignGenerated={handleDesignGenerated}
               onError={handleError}
               setIsLoading={setIsLoading}
               onSubmit={handleUploadSubmit}
             />
-          )}
+          )} */}
 
           {activeTab === "text" && (
             <TextPromptForm
