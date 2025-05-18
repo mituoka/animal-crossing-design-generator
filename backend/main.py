@@ -79,7 +79,9 @@ async def generate_from_image(
         # 画像生成
         logger.info("画像生成を開始")
         generated_image = generator.generate_from_image(
-            input_image, prompt=options.prompt, strength=0.75  # 元の画像の特徴をどの程度保持するか（0-1）
+            input_image,
+            prompt=options.prompt,
+            strength=0.75,  # 元の画像の特徴をどの程度保持するか（0-1）
         )
         logger.info("画像生成が完了")
 
