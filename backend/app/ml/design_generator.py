@@ -1,10 +1,13 @@
+# 標準ライブラリ
 import os
+import re
+
+# サードパーティ
 import numpy as np
 from PIL import Image
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 from sklearn.feature_extraction.text import TfidfVectorizer
-import re
 
 
 class DesignGenerator:

@@ -1,18 +1,17 @@
+# 標準ライブラリ
+import os
+from typing import Optional
+import base64
+import io
+
+# サードパーティ
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import os
-from typing import Optional
-import uuid
-import shutil
-from app.generator.pixel_generator import generate_pixel_art
 from pydantic import BaseModel
-import base64
-from io import BytesIO
-import requests
-import json
-import io
 from PIL import Image
+
+# ローカルモジュール
 from app.ml.stable_diffusion_generator import StableDiffusionGenerator
 from app.core.logger import setup_logger
 

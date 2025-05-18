@@ -1,7 +1,10 @@
-from PIL import Image
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
+# 標準ライブラリ
 import os
+from typing import Dict, List, Optional, Tuple
+
+# サードパーティ
+import numpy as np
+from PIL import Image
 from sklearn.cluster import KMeans
 
 

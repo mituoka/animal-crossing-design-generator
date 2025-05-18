@@ -1,8 +1,11 @@
+# 標準ライブラリ
+import os
+
+# サードパーティ
 import torch
 from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionPipeline
 from PIL import Image
 import numpy as np
-import os
 
 
 class StableDiffusionGenerator:
